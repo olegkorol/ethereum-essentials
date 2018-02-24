@@ -54,6 +54,7 @@ Account:
 - `eth.getBalance('accAddress')`
 - `personal.newAccount('pwdForAccount')`
 - `personal.unlockAccount('account', 'pwd')`
+- `personal.unlockAccount('account', 'pwd', 60*60*24)` (unlock for 24 hours)
 
 Transactions (unlock account first):
 
@@ -66,7 +67,7 @@ Transactions (unlock account first):
 eth.sendTransaction(
     {
       from: eth.accounts[0],
-      data: "0x" + contractCode, // contractCode = ABI
+      data: "0x" + contractCode, // contractCode = binary code
       gas: 1000000
     },
     function(err, tx) {
@@ -76,6 +77,7 @@ eth.sendTransaction(
 
 // the output contract=xxx is the address of the contract
 // SAVE it for any further interactions with the contract
+// if eth.getCode(contractAddress) !== '0x', then it has already been mined
 ```
 
 Mining & General:
@@ -86,14 +88,24 @@ Mining & General:
 - `web3.fromWei(amountOfWei, 'targetUnit')` (converts wei to ether)
 - `web3.toWei(amountOfUnit, 'initialUnit')` (e.g. (1, 'ether'))
 - `eth.getCode(contractAddress)` (get contract)
+- `loadScript('./path-to-script')`
+
+Contract Methods:
+
+- For getters: `myContract.myMethod(...params)`
+- For setters: `myContract.myMethod(...params, {from: 'address'})`
 
 ### Enable RPC to access node
 
 If we want to enable access to the node via RPC from e.g. our browser using Web3, then run:
 
-`geth --datadir=./datadir --nodiscover --rpc --rpcapi "db,personal,eth,net,web3" --rpccorsdomain="*" --rpcaddr="localhost" --rpcport 8545 console`
+`geth --datadir=./datadir --nodiscover --rpc --rpcapi "db,personal,eth,net,web3,debug" --rpccorsdomain="*" --rpcaddr="localhost" --rpcport 8545 console`
 
 _UI: You will set the HttpProvider on the web3 instance to use the URL specified above._
+
+### Enable RPC and Websockets
+
+`geth --datadir=./datadir --nodiscover --rpc --rpcapi "db,personal,eth,net,web3,debug" --rpccorsdomain="*" --rpcaddr="localhost" --rpcport 8545 --ws --wsapi "db,personal,eth,net,web3,debug" --wsorigins="*" --wsaddr="localhost" --wsport 8546 console`
 
 ## Smart Contracts
 
@@ -108,6 +120,19 @@ We write contracts in the Solidity language and those will be compiled down to b
 Every single node on the network will run this code in order to verify its correctness.
 
 Further, contracts will only run in response to a transaction. So they are reactive.
+
+### Gas
+
+To run our contract(s) on the network has a cost: gas.
+
+The EVM runs byte-code operations, called `opcodes`. Each type of opcode has a different price.
+The cost of the opcodes is always fixed. The total gas equals the total cost of opcodes.
+
+The gas is then paid with ether. The price of gas is dynamically decided by the miners.
+
+Solc and Remix provide tools to estimate gas.
+
+Gas prices can be found [here](https://ethstats.net/).
 
 ### Compiler
 
